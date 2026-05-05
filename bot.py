@@ -5,7 +5,7 @@ import httpx
 import random
 
 # CONFIGURATION
-TOKEN = 'YOUR_BOT_TOKEN_HERE'
+TOKEN = 'MTUwMTAzNDUxOTY3Nzg5ODkwMw.GzFtQs.XSLiG7X96o3Kzu2KeCcmtyqQxkTU6aCXG9te7M'
 SITES = {
     "images": "https://gelbooru.com/index.php",
     "videos": "https://realbooru.com/index.php",
