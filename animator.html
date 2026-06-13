@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>D Animator - Web Animation Studio</title>
+    <style>
+        :root {
+            --bg-dark: #1e1e1e; --bg-panel: #2d2d2d; --bg-hover: #3d3d3d;
+            --accent: #007acc; --text-main: #cccccc; --danger: #cc4444;
+        }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg-dark); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; touch-action: none; }
+        
+        /* Layout */
+        .top-bar { background-color: var(--bg-panel); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #111; }
+        .main-workspace { display: flex; flex: 1; overflow: hidden; flex-wrap: wrap; }
+        .toolbar { width: 250px; background-color: var(--bg-panel); padding: 15px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid #111; overflow-y: auto; }
+        .canvas-area { flex: 1; background-color: #111; display: flex; justify-content: center; align-items: center; overflow: auto; position: relative; min-width: 300px; }
+        .layers-panel { width: 260px; background-color: var(--bg-panel); padding: 15px; display: flex; flex-direction: column; border-left: 1px solid #111; overflow-y: auto; }
+        .timeline-area { height: 160px; background-color: var(--bg-panel); border-top: 1px solid #111; display: flex; flex-direction: column; }
+        
+        /* Canvas */
+        #canvas-container { position: relative; width: 800px; height: 600px; background-color: white; box-shadow: 0px 4px 15px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+        
+        /* Controls */
+        h3 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #aaa; letter-spacing: 1px; }
+        .control-group { background: #252525; padding: 10px; border-radius: 6px; }
+        .control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+        button { background-color: #444; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; transition: background 0.2s; }
+        button:hover:not(:disabled) { background-color: var(--bg-hover); }
+        button.active { background-color: var(--accent); }
+        button.danger { background-color: var(--danger); }
+        button.danger:hover:not(:disabled) { background-color: #ff5555; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        input[type="color"] { width: 100%; height: 40px; border: none; cursor: pointer; background: none; }
+        input[type="range"] { width: 100%; }
+        input[type="number"] { width: 45px; padding: 4px; background: #111; border: 1px solid #444; color: white; border-radius: 4px; font-size: 12px; }
+        
+        /* Layers */
+        .layer-list { display: flex; flex-direction: column; gap: 5px; flex: 1; margin-top: 10px; }
+        .layer-item { display: flex; justify-content: flex-start; align-items: center; padding: 6px 8px; background: #333; border-radius: 4px; cursor: pointer; border: 1px solid transparent; gap: 8px; }
+        .layer-item.active { border-color: var(--accent); background: #2a3b4c; }
+        .layer-item input[type="text"] { flex: 1; background: transparent; border: none; color: white; font-size: 13px; outline: none; width: 80px; }
+        .layer-item input[type="text"]:focus { background: #111; padding: 2px; border-radius: 3px; }
+        .layer-item input[type="checkbox"] { cursor: pointer; width: 16px; height: 16px; accent-color: var(--accent); }
+        .layer-item button { padding: 4px 8px; font-size: 11px; }
+        .ref-separator { margin: 15px 0 10px 0; border-top: 1px solid #444; }
+        
+        /* Timeline */
+        .timeline-controls { padding: 10px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #111; flex-wrap: wrap; }
+        .frames-container { display: flex; padding: 10px; gap: 10px; overflow-x: auto; flex: 1; align-items: center; }
+        .frame-thumb { width: 120px; height: 90px; background: white; border: 3px solid #444; border-radius: 4px; cursor: pointer; position: relative; flex-shrink: 0; background-size: contain; background-position: center; background-repeat: no-repeat; }
+        .frame-thumb.active { border-color: var(--accent); }
+        .frame-number { position: absolute; bottom: 2px; left: 4px; background: rgba(0,0,0,0.7); color: white; padding: 2px 6px; font-size: 11px; border-radius: 3px; }
+        
+        #import-file { display: none; }
+        .recording { animation: pulse 1s infinite; background-color: var(--danger) !important; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div style="font-weight: bold; font-size: 18px; color: white;">D Animator</div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button id="btn-undo" disabled title="Undo (Ctrl+Z)">⟲</button>
+            <button id="btn-redo" disabled title="Redo (Ctrl+Y)">⟳</button>
+            <div style="width: 1px; height: 24px; background: #444; margin: 0 5px;"></div>
+            <button id="btn-export-vid" style="background: #e67e22;">Export</button>
+            <button id="btn-export">Save</button>
+            <button onclick="document.getElementById('import-file').click()">Load</button>
+            <input type="file" id="import-file" accept=".json">
+        </div>
+    </div>
+
+    <div class="main-workspace">
+        <div class="toolbar">
+            <div class="control-group">
+                <h3>Tools</h3>
+                <div class="control-row">
+                    <button id="btn-draw" class="active" style="flex: 1; margin-right: 5px;">Draw</button>
+                    <button id="btn-erase" style="flex: 1;">Eraser</button>
+                </div>
+                <button id="btn-clear" style="width: 100%; margin-top: 5px;">Clear Active Layer</button>
+            </div>
+
+            <div class="control-group">
+                <h3>Brush</h3>
+                <div class="control-row"><input type="color" id="brush-color" value="#000000"></div>
+                <div class="control-row"><label>Size: <span id="size-val">5</span>px</label></div>
+                <input type="range" id="brush-size" min="1" max="100" value="5">
+            </div>
+
+            <div class="control-group">
+                <h3>View & Onion Skin</h3>
+                <div class="control-row">
+                    <label>Toggle Onion Skin</label>
+                    <input type="checkbox" id="onion-skin" checked>
+                </div>
+                <div class="control-row">
+                    <label>Past Frames</label>
+                    <input type="number" id="onion-prev" value="2" min="0" max="10">
+                </div>
+                <div class="control-row">
+                    <label>Future Frames</label>
+                    <input type="number" id="onion-next" value="1" min="0" max="10">
+                </div>
+                <div class="control-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
+                    <label>Playback FPS</label>
+                    <input type="number" id="fps-input" value="12" min="1" max="60">
+                </div>
+            </div>
+        </div>
+
+        <div class="canvas-area" id="canvas-area">
+            <div id="canvas-container">
+                </div>
+        </div>
+
+        <div class="layers-panel">
+            <h3>Animation Layers</h3>
+            <button id="btn-add-layer" style="margin-bottom: 5px;">+ Add Layer</button>
+            <div class="layer-list" id="layer-list"></div>
+            
+            <div class="ref-separator"></div>
+            
+            <h3>Background Layers</h3>
+            <button id="btn-add-bg" style="margin-bottom: 5px;">+ Add Background</button>
+            <div class="layer-list" id="bg-list"></div>
+        </div>
+    </div>
+
+    <div class="timeline-area">
+        <div class="timeline-controls">
+            <button id="btn-play" style="background: #28a745; width: 80px;">Play</button>
+            <button id="btn-add-frame">+ Frame</button>
+            <button id="btn-dup-frame">Duplicate</button>
+            <button id="btn-del-frame" class="danger">Delete</button>
+        </div>
+        <div class="frames-container" id="frames-container"></div>
+    </div>
+
+<script>
+    const WIDTH = 800;
+    const HEIGHT = 600;
+
+    class Layer {
+        constructor(name = "Layer") {
+            this.name = name;
+            this.visible = true;
+            this.canvas = document.createElement('canvas');
+            this.canvas.width = WIDTH;
+            this.canvas.height = HEIGHT;
+            this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
+        }
+        // Ultra-fast hardware cloning instead of text/base64 parsing
+        clone() {
+            const newLayer = new Layer(this.name);
+            newLayer.visible = this.visible;
+            newLayer.ctx.drawImage(this.canvas, 0, 0);
+            return newLayer;
+        }
+    }
+
+    class Frame {
+        constructor(layerCount = 1) {
+            this.layers = Array.from({length: layerCount}, (_, i) => new Layer(`Layer ${i + 1}`));
+        }
+        clone() {
+            const newFrame = new Frame(0);
+            newFrame.layers = this.layers.map(l => l.clone());
+            return newFrame;
+        }
+    }
+
+    let project = { frames: [new Frame(1)] };
+    let backgroundLayers = [new Layer("Background 1")];
+    
+    let currentFrameIdx = 0;
+    let currentLayerIdx = 0;
+    let currentBgIdx = 0;
+    let isEditingBg = false; 
+
+    let isDrawing = false;
+    let isPlaying = false;
+    let playInterval;
+    let brush = { color: '#000000', size: 5, mode: 'draw' };
+
+    const canvasContainer = document.getElementById('canvas-container');
+    const onionCanvas = document.createElement('canvas');
+    onionCanvas.width = WIDTH; onionCanvas.height = HEIGHT;
+    onionCanvas.style.pointerEvents = 'none'; 
+    const onionCtx = onionCanvas.getContext('2d');
+
+    const layerListEl = document.getElementById('layer-list');
+    const bgListEl = document.getElementById('bg-list');
+    const framesContainerEl = document.getElementById('frames-container');
+    
+    // --- Optimized Undo/Redo System ---
+    const MAX_HISTORY = 15;
+    let undoStack = [];
+    let redoStack = [];
+
+    class HistoryState {
+        constructor() {
+            // Clones the memory instantly without freezing the browser
+            this.bgLayers = backgroundLayers.map(l => l.clone());
+            this.frames = project.frames.map(f => f.clone());
+            this.currentFrameIdx = currentFrameIdx;
+            this.currentLayerIdx = currentLayerIdx;
+            this.currentBgIdx = currentBgIdx;
+            this.isEditingBg = isEditingBg;
+        }
+        restore() {
+            backgroundLayers = this.bgLayers.map(l => l.clone());
+            project.frames = this.frames.map(f => f.clone());
+            currentFrameIdx = this.currentFrameIdx;
+            currentLayerIdx = this.currentLayerIdx;
+            currentBgIdx = this.currentBgIdx;
+            isEditingBg = this.isEditingBg;
+            updateWorkspace(); renderLayers(); renderTimeline();
+        }
+    }
+
+    function saveHistoryState() {
+        if (isPlaying) return;
+        undoStack.push(new HistoryState());
+        if (undoStack.length > MAX_HISTORY) undoStack.shift();
+        redoStack = [];
+        updateHistoryButtons();
+    }
+
+    function performUndo() {
+        if (undoStack.length === 0 || isPlaying) return;
+        redoStack.push(new HistoryState());
+        const state = undoStack.pop();
+        state.restore();
+        updateHistoryButtons();
+    }
+
+    function performRedo() {
+        if (redoStack.length === 0 || isPlaying) return;
+        undoStack.push(new HistoryState());
+        const state = redoStack.pop();
+        state.restore();
+        updateHistoryButtons();
+    }
+
+    function updateHistoryButtons() {
+        document.getElementById('btn-undo').disabled = undoStack.length === 0;
+        document.getElementById('btn-redo').disabled = redoStack.length === 0;
+    }
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+            if (e.key.toLowerCase() === 'z') {
+                e.preventDefault();
+                if (e.shiftKey) performRedo();
+                else performUndo();
+            } else if (e.key.toLowerCase() === 'y') {
+                e.preventDefault();
+                performRedo();
+            }
+        }
+    });
+
+    document.getElementById('btn-undo').onclick = performUndo;
+    document.getElementById('btn-redo').onclick = performRedo;
+
+    function init() { updateWorkspace(); renderLayers(); renderTimeline(); updateHistoryButtons(); }
+
+    function updateWorkspace() {
+        canvasContainer.innerHTML = ''; 
+
+        backgroundLayers.forEach((bgLayer, index) => {
+            bgLayer.canvas.className = 'layer-canvas';
+            bgLayer.canvas.style.zIndex = 10 + index; 
+            bgLayer.canvas.style.opacity = bgLayer.visible ? "1" : "0";
+            const isActive = (isEditingBg && index === currentBgIdx && bgLayer.visible && !isPlaying);
+            bgLayer.canvas.style.pointerEvents = isActive ? 'auto' : 'none';
+            if (isActive) attachDrawingEvents(bgLayer.canvas, bgLayer.ctx);
+            canvasContainer.appendChild(bgLayer.canvas);
+        });
+
+        onionCanvas.style.zIndex = 100;
+        canvasContainer.appendChild(onionCanvas);
+        onionCtx.clearRect(0, 0, WIDTH, HEIGHT);
+        
+        if (document.getElementById('onion-skin').checked && !isPlaying) {
+            const prevCount = parseInt(document.getElementById('onion-prev').value) || 0;
+            const nextCount = parseInt(document.getElementById('onion-next').value) || 0;
+
+            for (let i = currentFrameIdx - prevCount; i <= currentFrameIdx + nextCount; i++) {
+                if (i === currentFrameIdx || i < 0 || i >= project.frames.length) continue;
+                const distance = Math.abs(currentFrameIdx - i);
+                onionCtx.globalAlpha = Math.max(0.05, 0.4 - (distance * 0.1)); 
+                project.frames[i].layers.forEach(l => { if(l.visible) onionCtx.drawImage(l.canvas, 0, 0); });
+            }
+            onionCtx.globalAlpha = 1.0;
+        }
+
+        const currentFrame = project.frames[currentFrameIdx];
+        currentFrame.layers.forEach((layer, index) => {
+            layer.canvas.className = 'layer-canvas';
+            layer.canvas.style.zIndex = 110 + index; 
+            layer.canvas.style.opacity = layer.visible ? "1" : "0";
+            const isActive = (!isEditingBg && index === currentLayerIdx && layer.visible && !isPlaying);
+            layer.canvas.style.pointerEvents = isActive ? 'auto' : 'none';
+            if (isActive) attachDrawingEvents(layer.canvas, layer.ctx);
+            canvasContainer.appendChild(layer.canvas);
+        });
+    }
+
+    function attachDrawingEvents(canvas, ctx) {
+        canvas.onmousedown = canvas.ontouchstart = (e) => startDrawing(e, ctx);
+        canvas.onmousemove = canvas.ontouchmove = (e) => draw(e, ctx);
+        canvas.onmouseup = canvas.onmouseout = canvas.ontouchend = canvas.ontouchcancel = stopDrawing;
+    }
+
+    function renderLayers() {
+        layerListEl.innerHTML = '';
+        const layers = project.frames[currentFrameIdx].layers;
+        for (let i = layers.length - 1; i >= 0; i--) {
+            const div = document.createElement('div');
+            div.className = `layer-item ${i === currentLayerIdx && !isEditingBg ? 'active' : ''}`;
+            div.innerHTML = `
+                <input type="checkbox" title="Hide/Show" ${layers[i].visible ? 'checked' : ''} onchange="toggleLayer(event, ${i})" onclick="event.stopPropagation()">
+                <input type="text" value="${layers[i].name}" onchange="renameLayer(event, ${i})" onclick="event.stopPropagation()">
+                <button class="danger" onclick="deleteLayer(event, ${i})">X</button>
+            `;
+            div.onclick = () => { isEditingBg = false; currentLayerIdx = i; updateWorkspace(); renderLayers(); };
+            layerListEl.appendChild(div);
+        }
+
+        bgListEl.innerHTML = '';
+        for (let i = backgroundLayers.length - 1; i >= 0; i--) {
+            const div = document.createElement('div');
+            div.className = `layer-item ${i === currentBgIdx && isEditingBg ? 'active' : ''}`;
+            div.innerHTML = `
+                <input type="checkbox" title="Hide/Show" ${backgroundLayers[i].visible ? 'checked' : ''} onchange="toggleBgLayer(event, ${i})" onclick="event.stopPropagation()">
+                <input type="text" value="${backgroundLayers[i].name}" onchange="renameBgLayer(event, ${i})" onclick="event.stopPropagation()">
+                <button class="danger" onclick="deleteBgLayer(event, ${i})">X</button>
+            `;
+            div.onclick = () => { isEditingBg = true; currentBgIdx = i; updateWorkspace(); renderLayers(); };
+            bgListEl.appendChild(div);
+        }
+    }
+
+    function renderTimeline() {
+        framesContainerEl.innerHTML = '';
+        project.frames.forEach((frame, i) => {
+            const thumb = document.createElement('div');
+            thumb.className = `frame-thumb ${i === currentFrameIdx ? 'active' : ''}`;
+            thumb.innerHTML = `<div class="frame-number">${i + 1}</div>`;
+            const tCtx = document.createElement('canvas').getContext('2d');
+            tCtx.canvas.width = WIDTH; tCtx.canvas.height = HEIGHT;
+            tCtx.fillStyle = "white"; tCtx.fillRect(0,0,WIDTH,HEIGHT);
+            backgroundLayers.forEach(bg => { if(bg.visible) tCtx.drawImage(bg.canvas, 0, 0); });
+            frame.layers.forEach(l => { if(l.visible) tCtx.drawImage(l.canvas, 0, 0); });
+            thumb.style.backgroundImage = `url(${tCtx.canvas.toDataURL()})`;
+            thumb.onclick = () => selectFrame(i);
+            framesContainerEl.appendChild(thumb);
+        });
+    }
+
+    function getPos(canvas, evt) {
+        const rect = canvas.getBoundingClientRect();
+        let clientX = evt.clientX; let clientY = evt.clientY;
+        if (evt.touches && evt.touches.length > 0) {
+            clientX = evt.touches[0].clientX; clientY = evt.touches[0].clientY;
+            if(evt.cancelable) evt.preventDefault(); 
+        }
+        return { x: (clientX - rect.left) * (canvas.width / rect.width), y: (clientY - rect.top) * (canvas.height / rect.height) };
+    }
+
+    function startDrawing(e, ctx) {
+        if (isPlaying) return;
+        saveHistoryState(); // Snapshot is now instantly taken in memory
+        isDrawing = true;
+        const pos = getPos(e.target, e);
+        ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = brush.size;
+        ctx.globalCompositeOperation = brush.mode === 'erase' ? 'destination-out' : 'source-over';
+        ctx.strokeStyle = brush.mode === 'erase' ? "rgba(0,0,0,1)" : brush.color;
+        draw(e, ctx); 
+    }
+
+    function draw(e, ctx) {
+        if (!isDrawing) return;
+        if (e.cancelable && e.type.includes('touch')) e.preventDefault();
+        const pos = getPos(e.target, e);
+        ctx.lineTo(pos.x, pos.y); ctx.stroke();
+    }
+
+    function stopDrawing() { if(isDrawing) { isDrawing = false; renderTimeline(); } }
+
+    function selectFrame(index) {
+        currentFrameIdx = index;
+        updateWorkspace(); renderLayers(); renderTimeline();
+    }
+
+    document.getElementById('btn-add-frame').onclick = () => {
+        saveHistoryState();
+        const newFrame = new Frame(0);
+        newFrame.layers = project.frames[currentFrameIdx].layers.map(l => { const newL = new Layer(l.name); newL.visible = l.visible; return newL; });
+        project.frames.splice(currentFrameIdx + 1, 0, newFrame); selectFrame(currentFrameIdx + 1);
+    };
+
+    document.getElementById('btn-dup-frame').onclick = () => { saveHistoryState(); project.frames.splice(currentFrameIdx + 1, 0, project.frames[currentFrameIdx].clone()); selectFrame(currentFrameIdx + 1); };
+    document.getElementById('btn-del-frame').onclick = () => { if (project.frames.length > 1) { saveHistoryState(); project.frames.splice(currentFrameIdx, 1); selectFrame(Math.max(0, currentFrameIdx - 1)); } };
+    
+    document.getElementById('btn-add-layer').onclick = () => { 
+        saveHistoryState();
+        const newName = `Layer ${project.frames[0].layers.length + 1}`;
+        project.frames.forEach(f => f.layers.push(new Layer(newName))); 
+        currentLayerIdx = project.frames[currentFrameIdx].layers.length - 1; 
+        isEditingBg = false; updateWorkspace(); renderLayers(); 
+    };
+    window.deleteLayer = function(e, index) { 
+        e.stopPropagation(); 
+        if (project.frames[currentFrameIdx].layers.length > 1) { 
+            saveHistoryState(); project.frames.forEach(f => f.layers.splice(index, 1)); 
+            currentLayerIdx = Math.min(currentLayerIdx, project.frames[0].layers.length - 1); updateWorkspace(); renderLayers(); renderTimeline(); 
+        } else { alert("You must have at least one animation layer."); }
+    }
+    window.toggleLayer = function(e, index) { e.stopPropagation(); project.frames.forEach(f => f.layers[index].visible = e.target.checked); updateWorkspace(); renderLayers(); renderTimeline(); }
+    window.renameLayer = function(e, index) { e.stopPropagation(); project.frames.forEach(f => f.layers[index].name = e.target.value); }
+    
+    document.getElementById('btn-add-bg').onclick = () => { 
+        saveHistoryState();
+        const newName = `Background ${backgroundLayers.length + 1}`;
+        backgroundLayers.push(new Layer(newName)); 
+        currentBgIdx = backgroundLayers.length - 1; 
+        isEditingBg = true; updateWorkspace(); renderLayers(); renderTimeline();
+    };
+    window.deleteBgLayer = function(e, index) { 
+        e.stopPropagation(); 
+        if (backgroundLayers.length > 1) { 
+            saveHistoryState(); backgroundLayers.splice(index, 1); 
+            currentBgIdx = Math.min(currentBgIdx, backgroundLayers.length - 1); updateWorkspace(); renderLayers(); renderTimeline(); 
+        } else { alert("You must have at least one background layer."); }
+    }
+    window.toggleBgLayer = function(e, index) { e.stopPropagation(); backgroundLayers[index].visible = e.target.checked; updateWorkspace(); renderLayers(); renderTimeline(); }
+    window.renameBgLayer = function(e, index) { e.stopPropagation(); backgroundLayers[index].name = e.target.value; }
+
+    document.getElementById('btn-clear').onclick = () => { 
+        saveHistoryState();
+        const targetCtx = isEditingBg ? backgroundLayers[currentBgIdx].ctx : project.frames[currentFrameIdx].layers[currentLayerIdx].ctx;
+        targetCtx.clearRect(0, 0, WIDTH, HEIGHT); renderTimeline(); 
+    };
+
+    document.getElementById('brush-color').oninput = (e) => brush.color = e.target.value;
+    document.getElementById('brush-size').oninput = (e) => { brush.size = e.target.value; document.getElementById('size-val').innerText = brush.size; };
+    document.getElementById('btn-draw').onclick = () => { brush.mode = 'draw'; document.getElementById('btn-draw').classList.add('active'); document.getElementById('btn-erase').classList.remove('active'); };
+    document.getElementById('btn-erase').onclick = () => { brush.mode = 'erase'; document.getElementById('btn-erase').classList.add('active'); document.getElementById('btn-draw').classList.remove('active'); };
+    
+    document.getElementById('onion-skin').onchange = updateWorkspace;
+    document.getElementById('onion-prev').onchange = updateWorkspace;
+    document.getElementById('onion-next').onchange = updateWorkspace;
+
+    document.getElementById('btn-play').onclick = () => {
+        isPlaying = !isPlaying;
+        const btn = document.getElementById('btn-play');
+        if (isPlaying) {
+            btn.innerText = "Stop"; btn.style.background = "#dc3545";
+            playInterval = setInterval(() => { 
+                currentFrameIdx = (currentFrameIdx + 1) % project.frames.length; updateWorkspace(); 
+                document.querySelectorAll('.frame-thumb').forEach((t, i) => t.classList.toggle('active', i === currentFrameIdx)); 
+            }, 1000 / (parseInt(document.getElementById('fps-input').value) || 12));
+        } else {
+            btn.innerText = "Play"; btn.style.background = "#28a745";
+            clearInterval(playInterval); selectFrame(currentFrameIdx);
+        }
+    };
+
+    document.getElementById('btn-export-vid').onclick = async () => {
+        const btn = document.getElementById('btn-export-vid');
+        const fps = parseInt(document.getElementById('fps-input').value) || 12;
+        btn.innerText = "Recording..."; btn.classList.add('recording');
+        
+        const expCanvas = document.createElement('canvas');
+        expCanvas.width = WIDTH; expCanvas.height = HEIGHT;
+        const ctx = expCanvas.getContext('2d');
+        const stream = expCanvas.captureStream(fps);
+        const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+        const chunks = [];
+        recorder.ondataavailable = e => chunks.push(e.data);
+        recorder.onstop = () => {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob(chunks, { type: 'video/webm' })); 
+            a.download = `animation_${Date.now()}.webm`; a.click();
+            btn.innerText = "Export Video"; btn.classList.remove('recording');
+        };
+        recorder.start();
+        for (let i = 0; i < project.frames.length; i++) {
+            ctx.fillStyle = 'white'; ctx.fillRect(0,0,WIDTH,HEIGHT);
+            backgroundLayers.forEach(bg => { if (bg.visible) ctx.drawImage(bg.canvas, 0, 0); });
+            project.frames[i].layers.forEach(l => { if (l.visible) ctx.drawImage(l.canvas, 0, 0); });
+            await new Promise(r => setTimeout(r, 1000 / fps));
+        }
+        recorder.stop();
+    };
+
+    document.getElementById('btn-export').onclick = () => {
+        const data = { 
+            fps: document.getElementById('fps-input').value, 
+            backgroundLayers: backgroundLayers.map(l => ({ name: l.name, visible: l.visible, img: l.canvas.toDataURL() })),
+            frames: project.frames.map(f => ({ layers: f.layers.map(l => ({ name: l.name, visible: l.visible, img: l.canvas.toDataURL() })) })) 
+        };
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: "application/json" })); a.download = `project.json`; a.click();
+    };
+
+    document.getElementById('import-file').onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+            undoStack = []; redoStack = []; updateHistoryButtons(); // Reset history cleanly
+            const data = JSON.parse(ev.target.result);
+            document.getElementById('fps-input').value = data.fps || 12;
+            
+            backgroundLayers = [];
+            if (data.backgroundLayers) {
+                for (const lData of data.backgroundLayers) {
+                    const layer = new Layer(lData.name); layer.visible = lData.visible !== false;
+                    const img = new Image(); img.src = lData.img; await new Promise(r => img.onload = r); layer.ctx.drawImage(img, 0, 0); backgroundLayers.push(layer);
+                }
+            } else { backgroundLayers.push(new Layer("Background 1")); }
+
+            project.frames = [];
+            for (const fData of data.frames) {
+                const frame = new Frame(0);
+                for (const lData of fData.layers) {
+                    const layer = new Layer(lData.name); layer.visible = lData.visible !== false;
+                    const img = new Image(); img.src = lData.img || lData; await new Promise(r => img.onload = r); layer.ctx.drawImage(img, 0, 0); frame.layers.push(layer);
+                }
+                project.frames.push(frame);
+            }
+            currentFrameIdx = 0; currentLayerIdx = 0; currentBgIdx = 0; isEditingBg = false; init();
+        };
+        if (e.target.files[0]) reader.readAsText(e.target.files[0]);
+    };
+
+    init();
+</script>
+</body>
+</html>
