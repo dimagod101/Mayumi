@@ -9,25 +9,40 @@
             --bg-dark: #1e1e1e; --bg-panel: #2d2d2d; --bg-hover: #3d3d3d;
             --accent: #007acc; --text-main: #cccccc; --danger: #cc4444;
         }
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg-dark); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; touch-action: none; }
         
-        /* Layout */
-        .top-bar { background-color: var(--bg-panel); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #111; }
-        .main-workspace { display: flex; flex: 1; overflow: hidden; flex-wrap: wrap; }
+        body { 
+            margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; 
+            background-color: var(--bg-dark); color: var(--text-main); 
+            display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; 
+        }
+        
+        /* Layout Structure */
+        .top-bar { background-color: var(--bg-panel); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #111; flex-wrap: wrap; gap: 10px; }
+        .top-bar-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
+        
+        .main-workspace { display: flex; flex: 1; overflow: hidden; flex-wrap: nowrap; }
         .toolbar { width: 250px; background-color: var(--bg-panel); padding: 15px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid #111; overflow-y: auto; }
-        .canvas-area { flex: 1; background-color: #111; display: flex; justify-content: center; align-items: center; overflow: auto; position: relative; min-width: 300px; }
+        .canvas-area { flex: 1; background-color: #111; display: flex; justify-content: center; align-items: center; overflow: auto; position: relative; min-width: 300px; padding: 10px; }
         .layers-panel { width: 260px; background-color: var(--bg-panel); padding: 15px; display: flex; flex-direction: column; border-left: 1px solid #111; overflow-y: auto; }
-        .timeline-area { height: 160px; background-color: var(--bg-panel); border-top: 1px solid #111; display: flex; flex-direction: column; }
+        .timeline-area { height: 160px; background-color: var(--bg-panel); border-top: 1px solid #111; display: flex; flex-direction: column; flex-shrink: 0; }
         
-        /* Canvas */
-        #canvas-container { position: relative; width: 800px; height: 600px; background-color: white; box-shadow: 0px 4px 15px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%; }
+        /* Responsive High-Res Canvas Container */
+        #canvas-container { 
+            position: relative; 
+            width: 800px; 
+            max-width: 100%; 
+            aspect-ratio: 4/3; 
+            height: auto; 
+            background-color: white; 
+            box-shadow: 0px 4px 15px rgba(0,0,0,0.5); 
+        }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
         
-        /* Controls */
+        /* Form Components & Buttons */
         h3 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #aaa; letter-spacing: 1px; }
-        .control-group { background: #252525; padding: 10px; border-radius: 6px; }
-        .control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
-        button { background-color: #444; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; transition: background 0.2s; }
+        .control-group { background: #252525; padding: 12px; border-radius: 6px; }
+        .control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 13px; gap: 10px; }
+        button { background-color: #444; color: white; border: none; padding: 10px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; transition: background 0.2s; }
         button:hover:not(:disabled) { background-color: var(--bg-hover); }
         button.active { background-color: var(--accent); }
         button.danger { background-color: var(--danger); }
@@ -35,21 +50,21 @@
         button:disabled { opacity: 0.5; cursor: not-allowed; }
         input[type="color"] { width: 100%; height: 40px; border: none; cursor: pointer; background: none; }
         input[type="range"] { width: 100%; }
-        input[type="number"] { width: 45px; padding: 4px; background: #111; border: 1px solid #444; color: white; border-radius: 4px; font-size: 12px; }
+        input[type="number"] { width: 50px; padding: 6px; background: #111; border: 1px solid #444; color: white; border-radius: 4px; font-size: 14px; }
         
-        /* Layers */
+        /* Layer Items Layout */
         .layer-list { display: flex; flex-direction: column; gap: 5px; flex: 1; margin-top: 10px; }
-        .layer-item { display: flex; justify-content: flex-start; align-items: center; padding: 6px 8px; background: #333; border-radius: 4px; cursor: pointer; border: 1px solid transparent; gap: 8px; }
+        .layer-item { display: flex; justify-content: flex-start; align-items: center; padding: 8px 10px; background: #333; border-radius: 4px; cursor: pointer; border: 1px solid transparent; gap: 8px; }
         .layer-item.active { border-color: var(--accent); background: #2a3b4c; }
-        .layer-item input[type="text"] { flex: 1; background: transparent; border: none; color: white; font-size: 13px; outline: none; width: 80px; }
-        .layer-item input[type="text"]:focus { background: #111; padding: 2px; border-radius: 3px; }
-        .layer-item input[type="checkbox"] { cursor: pointer; width: 16px; height: 16px; accent-color: var(--accent); }
-        .layer-item button { padding: 4px 8px; font-size: 11px; }
+        .layer-item input[type="text"] { flex: 1; background: transparent; border: none; color: white; font-size: 14px; outline: none; width: 80px; }
+        .layer-item input[type="text"]:focus { background: #111; padding: 4px; border-radius: 3px; }
+        .layer-item input[type="checkbox"] { cursor: pointer; width: 20px; height: 20px; accent-color: var(--accent); }
+        .layer-item button { padding: 6px 10px; font-size: 12px; }
         .ref-separator { margin: 15px 0 10px 0; border-top: 1px solid #444; }
         
-        /* Timeline */
-        .timeline-controls { padding: 10px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #111; flex-wrap: wrap; }
-        .frames-container { display: flex; padding: 10px; gap: 10px; overflow-x: auto; flex: 1; align-items: center; }
+        /* Timeline Interface */
+        .timeline-controls { padding: 12px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #111; flex-wrap: wrap; }
+        .frames-container { display: flex; padding: 10px; gap: 10px; overflow-x: auto; flex: 1; align-items: center; -webkit-overflow-scrolling: touch; }
         .frame-thumb { width: 120px; height: 90px; background: white; border: 3px solid #444; border-radius: 4px; cursor: pointer; position: relative; flex-shrink: 0; background-size: contain; background-position: center; background-repeat: no-repeat; }
         .frame-thumb.active { border-color: var(--accent); }
         .frame-number { position: absolute; bottom: 2px; left: 4px; background: rgba(0,0,0,0.7); color: white; padding: 2px 6px; font-size: 11px; border-radius: 3px; }
@@ -57,19 +72,38 @@
         #import-file { display: none; }
         .recording { animation: pulse 1s infinite; background-color: var(--danger) !important; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* Tablet/Mobile Responsive Adaptations */
+        @media (max-width: 900px) {
+            body { height: auto; overflow-y: auto; overflow-x: hidden; }
+            .top-bar { justify-content: center; text-align: center; }
+            .main-workspace { flex-direction: column; overflow: visible; }
+            
+            .toolbar { width: 100%; flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1px solid #111; padding: 10px; -webkit-overflow-scrolling: touch; }
+            .control-group { flex: 0 0 auto; width: 260px; }
+            
+            .canvas-area { padding: 15px; min-height: 45vh; }
+            
+            .layers-panel { width: 100%; border-left: none; border-top: 1px solid #111; border-bottom: 1px solid #111; padding: 10px; }
+            .layer-list { flex-direction: row; overflow-x: auto; gap: 10px; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
+            .layer-item { flex: 0 0 auto; width: 240px; }
+            
+            .timeline-area { height: auto; }
+            .timeline-controls { justify-content: center; }
+        }
     </style>
 </head>
 <body>
 
     <div class="top-bar">
         <div style="font-weight: bold; font-size: 18px; color: white;">Mayumi</div>
-        <div style="display: flex; gap: 8px; align-items: center;">
+        <div class="top-bar-controls">
             <button id="btn-undo" disabled title="Undo (Ctrl+Z)">⟲</button>
             <button id="btn-redo" disabled title="Redo (Ctrl+Y)">⟳</button>
             <div style="width: 1px; height: 24px; background: #444; margin: 0 5px;"></div>
             <button id="btn-export-vid" style="background: #e67e22;">Export</button>
             <button id="btn-export">Save</button>
-            <button onclick="document.getElementById('import-file').click()">Load</button>
+            <button id="btn-load-trigger">Load</button>
             <input type="file" id="import-file" accept=".json">
         </div>
     </div>
@@ -82,7 +116,7 @@
                     <button id="btn-draw" class="active" style="flex: 1; margin-right: 5px;">Draw</button>
                     <button id="btn-erase" style="flex: 1;">Eraser</button>
                 </div>
-                <button id="btn-clear" style="width: 100%; margin-top: 5px;">Clear Active Layer</button>
+                <button id="btn-clear" style="width: 100%;">Clear Active Layer</button>
             </div>
 
             <div class="control-group">
@@ -134,7 +168,7 @@
     <div class="timeline-area">
         <div class="timeline-controls">
             <button id="btn-play" style="background: #28a745; width: 80px;">Play</button>
-            <button id="btn-add-frame">add Frame</button>
+            <button id="btn-add-frame">Add Frame</button>
             <button id="btn-dup-frame">Duplicate</button>
             <button id="btn-del-frame" class="danger">Delete</button>
         </div>
@@ -154,7 +188,6 @@
             this.canvas.height = HEIGHT;
             this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
         }
-        // Ultra-fast hardware cloning instead of text/base64 parsing
         clone() {
             const newLayer = new Layer(this.name);
             newLayer.visible = this.visible;
@@ -197,14 +230,13 @@
     const bgListEl = document.getElementById('bg-list');
     const framesContainerEl = document.getElementById('frames-container');
     
-    // --- Optimized Undo/Redo System ---
+    // --- Optimized Undo/Redo Engine ---
     const MAX_HISTORY = 15;
     let undoStack = [];
     let redoStack = [];
 
     class HistoryState {
         constructor() {
-            // Clones the memory instantly without freezing the browser
             this.bgLayers = backgroundLayers.map(l => l.clone());
             this.frames = project.frames.map(f => f.clone());
             this.currentFrameIdx = currentFrameIdx;
@@ -252,7 +284,6 @@
         document.getElementById('btn-redo').disabled = redoStack.length === 0;
     }
 
-    // Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
         if (e.ctrlKey || e.metaKey) {
             if (e.key.toLowerCase() === 'z') {
@@ -266,16 +297,10 @@
         }
     });
 
-    document.getElementById('btn-undo').onclick = performUndo;
-    document.getElementById('btn-redo').onclick = performRedo;
-
-    function init() { updateWorkspace(); renderLayers(); renderTimeline(); updateHistoryButtons(); }
-
     function updateWorkspace() {
         canvasContainer.innerHTML = ''; 
 
         backgroundLayers.forEach((bgLayer, index) => {
-            bgLayer.canvas.className = 'layer-canvas';
             bgLayer.canvas.style.zIndex = 10 + index; 
             bgLayer.canvas.style.opacity = bgLayer.visible ? "1" : "0";
             const isActive = (isEditingBg && index === currentBgIdx && bgLayer.visible && !isPlaying);
@@ -303,7 +328,6 @@
 
         const currentFrame = project.frames[currentFrameIdx];
         currentFrame.layers.forEach((layer, index) => {
-            layer.canvas.className = 'layer-canvas';
             layer.canvas.style.zIndex = 110 + index; 
             layer.canvas.style.opacity = layer.visible ? "1" : "0";
             const isActive = (!isEditingBg && index === currentLayerIdx && layer.visible && !isPlaying);
@@ -314,9 +338,13 @@
     }
 
     function attachDrawingEvents(canvas, ctx) {
-        canvas.onmousedown = canvas.ontouchstart = (e) => startDrawing(e, ctx);
-        canvas.onmousemove = canvas.ontouchmove = (e) => draw(e, ctx);
-        canvas.onmouseup = canvas.onmouseout = canvas.ontouchend = canvas.ontouchcancel = stopDrawing;
+        canvas.onmousedown = (e) => startDrawing(e, ctx);
+        canvas.onmousemove = (e) => draw(e, ctx);
+        canvas.onmouseup = canvas.onmouseout = () => stopDrawing();
+
+        canvas.ontouchstart = (e) => startDrawing(e, ctx);
+        canvas.ontouchmove = (e) => draw(e, ctx);
+        canvas.ontouchend = canvas.ontouchcancel = () => stopDrawing();
     }
 
     function renderLayers() {
@@ -354,12 +382,20 @@
             const thumb = document.createElement('div');
             thumb.className = `frame-thumb ${i === currentFrameIdx ? 'active' : ''}`;
             thumb.innerHTML = `<div class="frame-number">${i + 1}</div>`;
-            const tCtx = document.createElement('canvas').getContext('2d');
-            tCtx.canvas.width = WIDTH; tCtx.canvas.height = HEIGHT;
-            tCtx.fillStyle = "white"; tCtx.fillRect(0,0,WIDTH,HEIGHT);
+            
+            // Fixed standard canvas construction to prevent iPad/Safari context tracking crashes
+            const tCanvas = document.createElement('canvas');
+            tCanvas.width = WIDTH;
+            tCanvas.height = HEIGHT;
+            const tCtx = tCanvas.getContext('2d');
+            
+            tCtx.fillStyle = "white"; 
+            tCtx.fillRect(0, 0, WIDTH, HEIGHT);
+            
             backgroundLayers.forEach(bg => { if(bg.visible) tCtx.drawImage(bg.canvas, 0, 0); });
             frame.layers.forEach(l => { if(l.visible) tCtx.drawImage(l.canvas, 0, 0); });
-            thumb.style.backgroundImage = `url(${tCtx.canvas.toDataURL()})`;
+            
+            thumb.style.backgroundImage = `url(${tCanvas.toDataURL()})`;
             thumb.onclick = () => selectFrame(i);
             framesContainerEl.appendChild(thumb);
         });
@@ -367,17 +403,21 @@
 
     function getPos(canvas, evt) {
         const rect = canvas.getBoundingClientRect();
-        let clientX = evt.clientX; let clientY = evt.clientY;
+        let clientX = evt.clientX; 
+        let clientY = evt.clientY;
         if (evt.touches && evt.touches.length > 0) {
-            clientX = evt.touches[0].clientX; clientY = evt.touches[0].clientY;
-            if(evt.cancelable) evt.preventDefault(); 
+            clientX = evt.touches[0].clientX; 
+            clientY = evt.touches[0].clientY;
         }
-        return { x: (clientX - rect.left) * (canvas.width / rect.width), y: (clientY - rect.top) * (canvas.height / rect.height) };
+        return { 
+            x: (clientX - rect.left) * (canvas.width / rect.width), 
+            y: (clientY - rect.top) * (canvas.height / rect.height) 
+        };
     }
 
     function startDrawing(e, ctx) {
         if (isPlaying) return;
-        saveHistoryState(); // Snapshot is now instantly taken in memory
+        saveHistoryState();
         isDrawing = true;
         const pos = getPos(e.target, e);
         ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
@@ -401,6 +441,10 @@
         updateWorkspace(); renderLayers(); renderTimeline();
     }
 
+    // --- Safe Button Event Assignments ---
+    document.getElementById('btn-undo').onclick = performUndo;
+    document.getElementById('btn-redo').onclick = performRedo;
+
     document.getElementById('btn-add-frame').onclick = () => {
         saveHistoryState();
         const newFrame = new Frame(0);
@@ -418,6 +462,7 @@
         currentLayerIdx = project.frames[currentFrameIdx].layers.length - 1; 
         isEditingBg = false; updateWorkspace(); renderLayers(); 
     };
+
     window.deleteLayer = function(e, index) { 
         e.stopPropagation(); 
         if (project.frames[currentFrameIdx].layers.length > 1) { 
@@ -435,6 +480,7 @@
         currentBgIdx = backgroundLayers.length - 1; 
         isEditingBg = true; updateWorkspace(); renderLayers(); renderTimeline();
     };
+
     window.deleteBgLayer = function(e, index) { 
         e.stopPropagation(); 
         if (backgroundLayers.length > 1) { 
@@ -453,6 +499,7 @@
 
     document.getElementById('brush-color').oninput = (e) => brush.color = e.target.value;
     document.getElementById('brush-size').oninput = (e) => { brush.size = e.target.value; document.getElementById('size-val').innerText = brush.size; };
+    
     document.getElementById('btn-draw').onclick = () => { brush.mode = 'draw'; document.getElementById('btn-draw').classList.add('active'); document.getElementById('btn-erase').classList.remove('active'); };
     document.getElementById('btn-erase').onclick = () => { brush.mode = 'erase'; document.getElementById('btn-erase').classList.add('active'); document.getElementById('btn-draw').classList.remove('active'); };
     
@@ -483,15 +530,15 @@
         const expCanvas = document.createElement('canvas');
         expCanvas.width = WIDTH; expCanvas.height = HEIGHT;
         const ctx = expCanvas.getContext('2d');
-        const stream = expCanvas.captureStream(fps);
+        const stream = expCanvas.captureStream ? expCanvas.captureStream(fps) : expCanvas.webkitCaptureStream(fps);
         const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
         const chunks = [];
         recorder.ondataavailable = e => chunks.push(e.data);
         recorder.onstop = () => {
             const a = document.createElement('a');
             a.href = URL.createObjectURL(new Blob(chunks, { type: 'video/webm' })); 
-            a.download = `animation_${Date.now()}.webm`; a.click();
-            btn.innerText = "Export Video"; btn.classList.remove('recording');
+            a.download = `mayumi_animation_${Date.now()}.webm`; a.click();
+            btn.innerText = "Export"; btn.classList.remove('recording');
         };
         recorder.start();
         for (let i = 0; i < project.frames.length; i++) {
@@ -509,13 +556,15 @@
             backgroundLayers: backgroundLayers.map(l => ({ name: l.name, visible: l.visible, img: l.canvas.toDataURL() })),
             frames: project.frames.map(f => ({ layers: f.layers.map(l => ({ name: l.name, visible: l.visible, img: l.canvas.toDataURL() })) })) 
         };
-        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: "application/json" })); a.download = `project.json`; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: "application/json" })); a.download = `mayumi_project.json`; a.click();
     };
+
+    document.getElementById('btn-load-trigger').onclick = () => { document.getElementById('import-file').click(); };
 
     document.getElementById('import-file').onchange = (e) => {
         const reader = new FileReader();
         reader.onload = async (ev) => {
-            undoStack = []; redoStack = []; updateHistoryButtons(); // Reset history cleanly
+            undoStack = []; redoStack = []; updateHistoryButtons();
             const data = JSON.parse(ev.target.result);
             document.getElementById('fps-input').value = data.fps || 12;
             
@@ -540,6 +589,13 @@
         };
         if (e.target.files[0]) reader.readAsText(e.target.files[0]);
     };
+
+    function init() { 
+        updateWorkspace(); 
+        renderLayers(); 
+        renderTimeline(); 
+        updateHistoryButtons(); 
+    }
 
     init();
 </script>
